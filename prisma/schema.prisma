@@ -1,0 +1,163 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ChangeAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model List {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  color       String?
+  emoji       String?
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tasks Task[]
+
+  @@map("lists")
+}
+
+model Task {
+  id          Int         @id @default(autoincrement())
+  title       String
+  description String?
+  status      TaskStatus  @default(PENDING)
+  priority    Priority    @default(MEDIUM)
+  dueDate     DateTime?
+  deadline    DateTime?
+  estimate    String?
+  actual      String?
+  recurringEnabled Boolean @default(false)
+  recurringFrequency String?
+  recurringInterval Int?
+  completedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  listId Int
+  list   List @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  subtasks   Subtask[]
+  reminders  Reminder[]
+  attachments Attachment[]
+  taskLabels TaskLabel[]
+
+  @@index([listId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([priority])
+  @@map("tasks")
+}
+
+model Subtask {
+  id        Int      @id @default(autoincrement())
+  title     String
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  taskId Int
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("subtasks")
+}
+
+model Reminder {
+  id       Int      @id @default(autoincrement())
+  message  String?
+  remindAt DateTime
+  sent     Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  taskId Int
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([remindAt])
+  @@map("reminders")
+}
+
+model Attachment {
+  id       Int      @id @default(autoincrement())
+  filename String
+  url      String
+  type     String
+  size     Int
+  createdAt DateTime @default(now())
+
+  taskId Int
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("attachments")
+}
+
+model Label {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  color     String?
+  createdAt DateTime @default(now())
+
+  taskLabels TaskLabel[]
+
+  @@map("labels")
+}
+
+model TaskLabel {
+  id Int @id @default(autoincrement())
+
+  taskId  Int
+  labelId Int
+
+  task  Task  @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, labelId])
+  @@index([taskId])
+  @@index([labelId])
+  @@map("task_labels")
+}
+
+model ChangeLog {
+  id         Int          @id @default(autoincrement())
+  entityType String
+  entityId   Int
+  action     ChangeAction
+  oldValue   String?
+  newValue   String?
+  changedBy  String?
+  createdAt  DateTime     @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("change_logs")
+}
