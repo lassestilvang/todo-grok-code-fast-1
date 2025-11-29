@@ -30,7 +30,7 @@ jest.mock('../../../lib/prisma', () => ({
   },
 }))
 
-import { prisma } from '../../../lib/prisma'
+import { prisma } from '@/lib/prisma'
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>
 

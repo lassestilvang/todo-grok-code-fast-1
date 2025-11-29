@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '../../../../lib/prisma'
+import { prisma } from '@/lib/prisma'
 
 async function logChanges(entityId: number, changes: Record<string, { old: any, new: any }>) {
   const logs = Object.entries(changes).map(([field, { old, new: newVal }]) => ({
